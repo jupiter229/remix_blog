@@ -20,7 +20,7 @@ export const loader: LoaderFunction  = async ({ params }) => {
 }
 
 export default function PostRoute() {
-  const { title, html } = useLoaderData();
+  const { title, html } = useLoaderData() as LoaderData;
   return (
     <main className="mx-auto max-w-4xl">
       <h1 className="my-6 border-b-2 text-center text-3xl">{title}</h1>
