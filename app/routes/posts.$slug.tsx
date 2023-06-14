@@ -14,6 +14,10 @@ export const loader: LoaderFunction  = async ({ params }) => {
   invariant(slug, "slug is required");
   const post = await getPost(slug);
   invariant(post, "post not found")
+  marked.use({
+    mangle: false,
+    headerIds: false,
+  });
   const html = marked(post?.markdown);
   
   return json<LoaderData>({title: post.title, html: html});
