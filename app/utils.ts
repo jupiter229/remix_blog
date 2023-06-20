@@ -66,6 +66,13 @@ export function useUser(): User {
   return maybeUser;
 }
 
+export function useOptionalAdminUser() {
+  const user = useOptionalUser();
+  if(!user) return null;
+  if(user?.email !== process.env.ADMIN_USER) return null
+  return user;
+}
+
 export function validateEmail(email: unknown): email is string {
   return typeof email === "string" && email.length > 3 && email.includes("@");
 }
