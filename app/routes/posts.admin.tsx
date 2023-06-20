@@ -1,12 +1,14 @@
 import { LoaderFunction, json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData } from "@remix-run/react";
 import { getPosts } from "~/models/post.server";
+import { requireAdminUser } from "~/session.server";
 
 type LoaderData = {
   posts: Awaited<ReturnType<typeof getPosts>>
 }
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
+  await requireAdminUser(request);
   const posts = await getPosts();
   return json<LoaderData>({posts});
 }
