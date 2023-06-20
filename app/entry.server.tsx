@@ -12,7 +12,10 @@ import { RemixServer } from "@remix-run/react";
 import isbot from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 import { renderHeadToString } from 'remix-island';
+import { getEnv } from "./env.server";
 import { Head } from "./root";
+
+global.ENV = getEnv();
 
 const ABORT_DELAY = 5_000;
 

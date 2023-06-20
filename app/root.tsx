@@ -8,11 +8,18 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import { createHead } from 'remix-island';
 
 import { getUser } from "~/session.server";
 import stylesheet from "~/tailwind.css";
+import { getEnv } from "./env.server";
+
+type LoaderData = {
+  user: Awaited<ReturnType<typeof getUser>>;
+  ENV: ReturnType<typeof getEnv>,
+}
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -20,7 +27,10 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderArgs) => {
-  return json({ user: await getUser(request) });
+  return json<LoaderData>({ 
+    user: await getUser(request),
+    ENV: getEnv(),
+  });
 };
 
 export const Head = createHead(() => (
@@ -31,12 +41,19 @@ export const Head = createHead(() => (
 ));
 
 export default function App() {
+  const data = useLoaderData();
   return (
     <>
       <Head />
       <Outlet />
       <ScrollRestoration />
       <Scripts />
+      {/* This is the inline script tag */}
+      <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+          }}
+        />
       <LiveReload />
     </>
   );
