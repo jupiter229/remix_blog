@@ -1,7 +1,7 @@
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { createPost, getPost, updatePost } from "~/models/post.server";
+import { createPost, deletePost, getPost, updatePost } from "~/models/post.server";
 import { requireAdminUser } from "~/session.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -17,6 +17,11 @@ export const action: ActionFunction = async ({ request, params }) => {
   
   await requireAdminUser(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
+  if(intent === "delete") {
+    await deletePost(params.slug);
+    return redirect('/posts/admin');
+  }
 
   const title = formData.get('title');
   const slug =  formData.get('slug');
@@ -71,10 +76,10 @@ export default function NewPost() {
 
   const isCreating = navigation.formData?.get("intent") === "create";
   const isUpdating = navigation.formData?.get("intent") === "update";
+  const isDeleting = navigation.formData?.get("intent") === "delete";
+  
   const isNewPost = !data.post;
 
-  console.log('navigation.formData?.get("intent") ', navigation.formData?.get("intent"))
-  console.log('isUpdating ', isUpdating)
 
   return (
     <Form method="post" key={data.post?.slug ?? "new"}>
@@ -124,7 +129,20 @@ export default function NewPost() {
           defaultValue={data.post?.markdown}
         />
       </p>
-      <p className="text-right">
+      <div className="flex justify-end text-right gap-2">
+        {!isNewPost &&
+          <button
+            name="intent"
+            type="submit"
+            value="delete"
+            className="rounded bg-red-500 py-2 px-4 text-white hover:bg-red-600 focus:bg-red-400 disabled:bg-red-300"
+            disabled={isDeleting}
+          >
+            {isDeleting ?  "Deleting..." : "Delete" }
+            
+          </button>
+        }
+
         <button
           name="intent"
           type="submit"
@@ -136,7 +154,7 @@ export default function NewPost() {
           {isNewPost ? null: (isUpdating ? "Updating..." : "Update") }
           
         </button>
-      </p>
+      </div>
     </Form>
   );
 
