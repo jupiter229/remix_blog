@@ -1,7 +1,7 @@
 import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { createPost } from "~/models/post.server";
+import { createPost, getPost, updatePost } from "~/models/post.server";
 import { requireAdminUser } from "~/session.server";
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -9,7 +9,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   if (params.slug === 'new') {
     return json({});
   }
-  return json({post: null})
+  const post = await getPost(params.slug);
+  return json({ post });
 }
 
 export const action: ActionFunction = async ({ request, params }) => {
@@ -53,7 +54,7 @@ export const action: ActionFunction = async ({ request, params }) => {
   if (params.slug === "new") {
     await createPost({title, slug, markdown});
   } else {
-    // TODO update the post
+    await updatePost(params.slug, {title, slug, markdown})
   }
   
 
@@ -63,15 +64,20 @@ export const action: ActionFunction = async ({ request, params }) => {
 const inputClassName = `w-full rounded border border-gray-500 px-2 py-1 text-lg`;
 
 export default function NewPost() {
+  const data = useLoaderData();
   const errors = useActionData<typeof action>();
   
   const navigation = useNavigation();
-  const isCreating = Boolean(
-    navigation.state === "submitting"
-  );
+
+  const isCreating = navigation.formData?.get("intent") === "create";
+  const isUpdating = navigation.formData?.get("intent") === "update";
+  const isNewPost = !data.post;
+
+  console.log('navigation.formData?.get("intent") ', navigation.formData?.get("intent"))
+  console.log('isUpdating ', isUpdating)
 
   return (
-    <Form method="post">
+    <Form method="post" key={data.post?.slug ?? "new"}>
       <p>
         <label>
           Post Title:{" "}
@@ -82,6 +88,7 @@ export default function NewPost() {
             type="text"
             name="title"
             className={inputClassName}
+            defaultValue={data.post?.title}
           />
         </label>
       </p>
@@ -95,6 +102,7 @@ export default function NewPost() {
             type="text"
             name="slug"
             className={inputClassName}
+            defaultValue={data.post?.slug}
           />
         </label>
       </p>
@@ -113,15 +121,19 @@ export default function NewPost() {
           rows={20}
           name="markdown"
           className={`${inputClassName} font-mono`}
+          defaultValue={data.post?.markdown}
         />
       </p>
       <p className="text-right">
         <button
+          name="intent"
           type="submit"
+          value={isNewPost ? "create": "update"}
           className="rounded bg-blue-500 py-2 px-4 text-white hover:bg-blue-600 focus:bg-blue-400 disabled:bg-blue-300"
-          disabled={isCreating}
+          disabled={isCreating || isUpdating}
         >
-          {isCreating ? "Creating..." : "Create Post" }
+          {isNewPost ? (isCreating ? "Creating..." : "Create Post"): null}
+          {isNewPost ? null: (isUpdating ? "Updating..." : "Update") }
           
         </button>
       </p>
