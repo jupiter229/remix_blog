@@ -7,6 +7,8 @@ import type { Post } from "@prisma/client";
 
 import { prisma } from "~/db.server";
 
+export type { Post };
+
 export async function getPosts(): Promise<Array<IPost>> {
   return prisma.post.findMany();
 }
